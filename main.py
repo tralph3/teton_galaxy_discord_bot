@@ -19,9 +19,9 @@ class ServerStats():
 
 SERVER_STATS = None
 
-SERVER_IP = os.environ.get("TETON_SERVER_IP", None)
-TOKEN = os.environ.get("TETON_DISCORD_TOKEN", None)
-CHANNEL_ID = os.environ.get("TETON_CHANNEL_ID", None)
+SERVER_IP = os.environ.get("TETON_SERVER_IP", "")
+TOKEN = os.environ.get("TETON_DISCORD_TOKEN", "")
+CHANNEL_ID = os.environ.get("TETON_CHANNEL_ID", "")
 
 CONFIG_FILE = "config.json"
 
@@ -183,7 +183,7 @@ async def setup_hook():
     asyncio.create_task(updater())
 
 if __name__ == "__main__":
-    if TOKEN is None or CHANNEL_ID is None or SERVER_IP is None:
+    if TOKEN == "" or CHANNEL_ID == "" or SERVER_IP == "":
         print("Missing required env vars. Aborting")
         exit()
 
