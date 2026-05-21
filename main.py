@@ -23,8 +23,6 @@ SERVER_IP = os.environ.get("TETON_SERVER_IP", "")
 TOKEN = os.environ.get("TETON_DISCORD_TOKEN", "")
 CHANNEL_ID = os.environ.get("TETON_CHANNEL_ID", "")
 
-CONFIG_FILE = "config.json"
-
 intents = discord.Intents.default()
 client = discord.Client(intents=intents)
 
@@ -54,19 +52,6 @@ def get_server_stats():
         favicon_file=favicon_file,
         mc_version=query.software.version,
     )
-
-def load_config():
-    if not os.path.exists(CONFIG_FILE):
-        return {}
-
-    with open(CONFIG_FILE, "r") as f:
-        return json.load(f)
-
-
-def save_config(config):
-    with open(CONFIG_FILE, "w") as f:
-        json.dump(config, f)
-
 
 def build_embed():
     retry_count = 0
@@ -118,30 +103,16 @@ def build_embed():
 
 
 async def get_or_create_message(channel):
-    config = load_config()
-
-    message_id = config.get("message_id")
-
-    if message_id is not None:
-        try:
-            return await channel.fetch_message(message_id)
-        except discord.NotFound:
-            print("message deleted, creating new one")
+    async for message in channel.history(limit=20):
+        if message.author.id == client.user.id:
+            return message
 
     embed, stats = build_embed()
 
-    message = await channel.send(
+    return await channel.send(
         embed=embed,
         file=stats.favicon_file if stats and stats.favicon_file else None,
     )
-
-    config["message_id"] = message.id
-    save_config(config)
-
-    print(f"created message {message.id}")
-
-    return message
-
 
 async def updater():
     await client.wait_until_ready()
