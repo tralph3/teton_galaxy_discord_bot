@@ -7,6 +7,7 @@ import json
 import time
 import asyncio
 import discord
+import logging
 
 @dataclass
 class ServerStats():
@@ -26,6 +27,13 @@ CHANNEL_ID = os.environ.get("TETON_CHANNEL_ID", "")
 intents = discord.Intents.default()
 client = discord.Client(intents=intents)
 
+logging.basicConfig(
+    level=logging.INFO,
+    format="[%(asctime)s] %(levelname)s: %(message)s",
+)
+
+logger = logging.getLogger("teton")
+
 def get_server_stats():
     try:
         server = JavaServer.lookup(SERVER_IP)
@@ -41,7 +49,7 @@ def get_server_stats():
                 filename="favicon.png",
             )
     except Exception as e:
-        print(f"Getting server stats failed: {e}")
+        logger.error(f"Getting server stats failed: {e}")
         return None
 
     return ServerStats(
@@ -58,7 +66,7 @@ def build_embed():
     while retry_count < 5:
         stats = get_server_stats()
         if stats is None:
-            print("Failed getting server info... retrying")
+            logger.error("Failed getting server info... retrying")
             time.sleep(2)
             retry_count += 1
         else:
@@ -120,7 +128,7 @@ async def updater():
     channel = client.get_channel(int(CHANNEL_ID))
 
     if channel is None:
-        print("channel not found")
+        logger.warning("Channel not found")
         return
 
     message = await get_or_create_message(channel)
@@ -133,21 +141,21 @@ async def updater():
                 attachments=[stats.favicon_file] if stats and stats.favicon_file else [],
             )
 
-            print("Stats updated")
+            logger.info("Stats updated")
 
         except discord.errors.NotFound:
-            print("Message got deleted, recreating...")
+            logger.warning("Message got deleted, recreating...")
             message = await get_or_create_message(channel)
 
         except Exception as e:
-            print(e)
+            logger.error(e)
 
         await asyncio.sleep(60)
 
 
 @client.event
 async def on_ready():
-    print(f"logged in as {client.user}")
+    logger.info(f"Logged in as {client.user}")
 
 @client.event
 async def setup_hook():
@@ -155,7 +163,7 @@ async def setup_hook():
 
 if __name__ == "__main__":
     if TOKEN == "" or CHANNEL_ID == "" or SERVER_IP == "":
-        print("Missing required env vars. Aborting")
+        logger.error("Missing required env vars. Aborting")
         exit()
 
     client.run(TOKEN)
