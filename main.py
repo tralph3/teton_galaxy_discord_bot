@@ -96,8 +96,6 @@ def build_embed():
     if not players:
         players = "*No hay tetones juguetones 😒*"
 
-    embed.add_field(name="IP", value=SERVER_IP)
-
     if stats.mc_version:
         embed.add_field(name="Version", value=stats.mc_version)
 
